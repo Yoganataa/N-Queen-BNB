@@ -5,66 +5,78 @@ export default function solvePuzzle(board) {
   let isAnimationNeeded = true;
 
   function saveAnimation(i, j) {
-    // board.slice() doesn't work on nested array becz slice method does not make deep copy.
-    // It only copies the first layer of the array
-    const temp = JSON.parse(JSON.stringify(board)); // create copy of board
+    const temp = JSON.parse(JSON.stringify(board));
     temp[i][j].isActive = true;
-    animations.push(temp); // save animation
+    animations.push(temp);
   }
 
-  function isSafe(row, col) {
-    let i, j;
+  function countConflicts(row, col) {
+    let conflicts = 0;
+    for (let i = 0; i < N; i++) {
+      if (board[i][col].hasQueen || board[row][i].hasQueen) {
+        conflicts++;
+      }
+      if (i !== row) {
+        const d1 = col - (row - i);
+        const d2 = col + (row - i);
+        if (d1 >= 0 && d1 < N && board[i][d1].hasQueen) conflicts++;
+        if (d2 >= 0 && d2 < N && board[i][d2].hasQueen) conflicts++;
+      }
+    }
+    return conflicts;
+  }
 
-    // Check this row on left side
-    for (i = 0; i < col; i++) if (board[row][i].hasQueen) return false;
+  function findMinConflictsRow(col) {
+    let minConflicts = Infinity;
+    let minRow = -1;
 
-    // Check upper diagonal on left side
-    for (i = row - 1, j = col - 1; i >= 0 && j >= 0; i--, j--)
-      if (board[i][j].hasQueen) return false;
+    for (let i = 0; i < N; i++) {
+      if (!board[i][col].hasQueen) {
+        const conflicts = countConflicts(i, col);
+        if (conflicts < minConflicts) {
+          minConflicts = conflicts;
+          minRow = i;
+        }
+      }
+    }
 
-    // Check lower diagonal on left side
-    for (i = row + 1, j = col - 1; j >= 0 && i < N; i++, j--)
-      if (board[i][j].hasQueen) return false;
-
-    return true;
+    return minRow;
   }
 
   function placeQueen(col) {
-    // Base case: All queens are placed
     if (col >= N) {
       const solutionBoard = JSON.parse(JSON.stringify(board));
-      results.push(solutionBoard); // push this solution and search for another solution
+      results.push(solutionBoard);
       if (isAnimationNeeded) {
-        animations.push(solutionBoard.slice()); // push final result;
-        isAnimationNeeded = false; // save animation only for one solution
+        animations.push(solutionBoard.slice());
+        isAnimationNeeded = false;
       }
       return true;
     }
 
     let res = false;
-    // Consider this col and try to place this queen in all row one by one
-    for (let i = 0; i < N; i++) {
-      let row = i;
+
+    // Use Branch and Bound to prioritize rows with fewer conflicts
+    const row = findMinConflictsRow(col);
+
+    if (isAnimationNeeded) saveAnimation(row, col);
+
+    if (isSafe(row, col)) {
+      board[row][col].hasQueen = true;
+
       if (isAnimationNeeded) saveAnimation(row, col);
-      // Check if queen can be placed on board[i][col];
-      if (isSafe(row, col)) {
-        board[row][col].hasQueen = true; // Place queen;
 
-        if (isAnimationNeeded) saveAnimation(row, col);
+      res = placeQueen(col + 1);
 
-        // Recursion to place rest of queens
-        res = placeQueen(col + 1);
-
-        // if placing queen in board[i][col] does't lead to solution, then remove queen from board[i][col]
-        board[row][col].hasQueen = false;
-      }
+      board[row][col].hasQueen = false;
     }
 
-    // If queen can't be placed
     return res;
   }
-  if (placeQueen(0)) { // But, here we are printing all solutions so final return will be false
+
+  if (placeQueen(0)) {
     console.log("Soln found!!");
   }
+
   return { results, animations };
 }
