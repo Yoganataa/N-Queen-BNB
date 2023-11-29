@@ -10,38 +10,22 @@ export default function solvePuzzle(board) {
     animations.push(temp);
   }
 
-  function countConflicts(row, col) {
-    let conflicts = 0;
-    for (let i = 0; i < N; i++) {
-      if (board[i][col].hasQueen || board[row][i].hasQueen) {
-        conflicts++;
-      }
-      if (i !== row) {
-        const d1 = col - (row - i);
-        const d2 = col + (row - i);
-        if (d1 >= 0 && d1 < N && board[i][d1].hasQueen) conflicts++;
-        if (d2 >= 0 && d2 < N && board[i][d2].hasQueen) conflicts++;
-      }
-    }
-    return conflicts;
+  // Define the isSafe function
+  function isSafe(row, col) {
+    let i, j;
+
+    for (i = 0; i < col; i++) if (board[row][i].hasQueen) return false;
+
+    for (i = row - 1, j = col - 1; i >= 0 && j >= 0; i--, j--)
+      if (board[i][j].hasQueen) return false;
+
+    for (i = row + 1, j = col - 1; j >= 0 && i < N; i++, j--)
+      if (board[i][j].hasQueen) return false;
+
+    return true;
   }
 
-  function findMinConflictsRow(col) {
-    let minConflicts = Infinity;
-    let minRow = -1;
-
-    for (let i = 0; i < N; i++) {
-      if (!board[i][col].hasQueen) {
-        const conflicts = countConflicts(i, col);
-        if (conflicts < minConflicts) {
-          minConflicts = conflicts;
-          minRow = i;
-        }
-      }
-    }
-
-    return minRow;
-  }
+  // ... (rest of the code)
 
   function placeQueen(col) {
     if (col >= N) {
@@ -56,11 +40,11 @@ export default function solvePuzzle(board) {
 
     let res = false;
 
-    // Use Branch and Bound to prioritize rows with fewer conflicts
     const row = findMinConflictsRow(col);
 
     if (isAnimationNeeded) saveAnimation(row, col);
 
+    // Use the isSafe function here
     if (isSafe(row, col)) {
       board[row][col].hasQueen = true;
 
