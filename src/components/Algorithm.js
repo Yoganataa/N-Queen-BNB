@@ -1,5 +1,3 @@
-import { PriorityQueue } from 'data-structure-library';
-
 export default function solvePuzzle(board) {
  const N = board.length;
  const results = [];
