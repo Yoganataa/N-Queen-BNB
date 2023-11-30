@@ -60,8 +60,7 @@ export default function solvePuzzle(board) {
   nodes.sort((a, b) => a.heuristic - b.heuristic);
 
   // Explore nodes in sorted order
-  for (const node of nodes) {
-    const { col, board } = node;
+  for (const { col } of nodes) {
     // Place the queen at the current column and continue the search
     placeQueen(col);
   }
