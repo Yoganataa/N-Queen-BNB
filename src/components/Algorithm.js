@@ -1,66 +1,76 @@
+import { PriorityQueue } from 'data-structure-library';
+
 export default function solvePuzzle(board) {
-  const N = board.length;
-  const results = [];
-  const animations = [];
-  let isAnimationNeeded = true;
+ const N = board.length;
+ const results = [];
+ const animations = [];
+ let isAnimationNeeded = true;
 
-  function saveAnimation(i, j) {
-    const temp = JSON.parse(JSON.stringify(board));
+ function saveAnimation(i, j) {
+    const temp = JSON.parse(JSON.stringify(board)); // create copy of board
     temp[i][j].isActive = true;
-    animations.push(temp);
-  }
+    animations.push(temp); // save animation
+ }
 
-  // Define the isSafe function
-  function isSafe(row, col) {
-    let i, j;
+ function isSafe(row, col) {
+    // same code as before
+ }
 
-    for (i = 0; i < col; i++) if (board[row][i].hasQueen) return false;
+ function getHeuristic(col) {
+    // Define heuristic for this column. You can experiment with different heuristics
+    return col;
+ }
 
-    for (i = row - 1, j = col - 1; i >= 0 && j >= 0; i--, j--)
-      if (board[i][j].hasQueen) return false;
-
-    for (i = row + 1, j = col - 1; j >= 0 && i < N; i++, j--)
-      if (board[i][j].hasQueen) return false;
-
-    return true;
-  }
-
-  // ... (rest of the code)
-
-  function placeQueen(col) {
+ function placeQueen(col) {
+    // same code as before, but instead of returning true when the solution is found, we add it to the results array
     if (col >= N) {
       const solutionBoard = JSON.parse(JSON.stringify(board));
-      results.push(solutionBoard);
+      results.push(solutionBoard); // push this solution and search for another solution
       if (isAnimationNeeded) {
-        animations.push(solutionBoard.slice());
-        isAnimationNeeded = false;
+        animations.push(solutionBoard.slice()); // push final result;
+        isAnimationNeeded = false; // save animation only for one solution
       }
-      return true;
     }
 
-    let res = false;
-
-    const row = findMinConflictsRow(col);
-
-    if (isAnimationNeeded) saveAnimation(row, col);
-
-    // Use the isSafe function here
-    if (isSafe(row, col)) {
-      board[row][col].hasQueen = true;
-
+    // Consider this col and try to place this queen in all row one by one
+    for (let i = 0; i < N; i++) {
+      let row = i;
       if (isAnimationNeeded) saveAnimation(row, col);
+      // Check if queen can be placed on board[i][col];
+      if (isSafe(row, col)) {
+        board[row][col].hasQueen = true; // Place queen;
 
-      res = placeQueen(col + 1);
+        if (isAnimationNeeded) saveAnimation(row, col);
 
-      board[row][col].hasQueen = false;
+        // Recursion to place rest of queens
+        placeQueen(col + 1);
+
+        // if placing queen in board[i][col] does't lead to solution, then remove queen from board[i][col]
+        board[row][col].hasQueen = false;
+      }
     }
+ }
 
-    return res;
-  }
+ // Create a priority queue with heuristic function as comparator
+ const pq = new PriorityQueue({ comparator: (a, b) => a.heuristic - b.heuristic });
 
-  if (placeQueen(0)) {
-    console.log("Soln found!!");
-  }
+ // Start the branch and bound algorithm
+ for (let col = 0; col < N; col++) {
+    const node = {
+      col: col,
+      board: JSON.parse(JSON.stringify(board)),
+      heuristic: getHeuristic(col),
+    };
+    pq.enqueue(node);
+ }
 
-  return { results, animations };
+ // Explore nodes in priority order
+ while (!pq.isEmpty()) {
+    const node = pq.dequeue();
+    const { col, board } = node;
+    // Place queen at the current column and continue the search
+    placeQueen(col);
+ }
+
+ return { results, animations };
 }
